@@ -1,0 +1,37 @@
+
+# roadmap
+
+2. Ruchy pionków
+ - możliwości zabójstw i kolejne zbicia, łańcuch ruchów
+ - wybór bicia (zejście w głąb propozycji możliwych zabójstw)
+
+3. Stan gry
+ - zapakowanie rozgrywki w obiekt
+ - obiekt "stan gry" zachowuje informacje o rodzaju gry
+ - system punktacji
+ - historię ruchów
+ - pilnuje kolejności ruchów
+ - zwycięstwo po zbiciu wszystkich pionków przeciwnika
+ - możliwość poddania gry
+ - zasady remisu
+ - podpowiadanie możliwych ruchów?
+
+4. MinMax - algorytm podpowiadający (najlepsze) ruchy.
+
+---
+
+5. GUI
+6. Efekty dźwiękowe
+7. Gra sieciowa
+8. Inne warianty gry w warcaby?
+
+
+# work-in-progress
+
+interfaces
+
+
+# scratchpad
+
+class ComputerPlayer implements Player {}
+
