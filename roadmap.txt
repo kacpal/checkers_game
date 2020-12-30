@@ -1,16 +1,12 @@
 
 # roadmap
-
-2. Ruchy pionków
- - możliwości zabójstw i kolejne zbicia, łańcuch ruchów
- - wybór bicia (zejście w głąb propozycji możliwych zabójstw)
-
 3. Stan gry
  - zapakowanie rozgrywki w obiekt
  - obiekt "stan gry" zachowuje informacje o rodzaju gry
  - system punktacji
  - historię ruchów
  - pilnuje kolejności ruchów
+ - przegrana po utracie wszystkich pionków
  - zwycięstwo po zbiciu wszystkich pionków przeciwnika
  - możliwość poddania gry
  - zasady remisu
@@ -35,3 +31,5 @@ interfaces
 
 class ComputerPlayer implements Player {}
 
+Może warto by wiedzieć, jakie pionki posiada gracz? Ile ich zostało i na jakich są polach.
+Do rozważenia - ew. implementacja w klasie HumanPlayer.
