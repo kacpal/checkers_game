@@ -25,4 +25,12 @@ public class ConsoleUI implements UI, Serializable {
             System.out.println();
         }
     }
+
+    @Override
+    public void displayResults(int result) {
+        System.out.println("Game finished. The result is: ");
+        if (result == 3) System.out.println("DRAW");
+        if (result == 2) System.out.println("PLAYER 2 WINS");
+        if (result == 1) System.out.println("PLAYER 1 WINS");
+    }
 }
