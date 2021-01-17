@@ -56,7 +56,6 @@ public class HumanPlayer implements Player {
     @Override
     public void nextMove() {
         Field f, t;
-        board.display();
         if (anyKillPossible()) {
             System.out.println("Killing this turn is possible.");
         }
