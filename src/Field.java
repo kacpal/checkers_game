@@ -1,4 +1,6 @@
-public class Field {
+import java.io.*;
+
+public class Field implements Serializable {
     int content = 0;
     int x, y;
 
@@ -7,6 +9,10 @@ public class Field {
     Field(int x, int y) {
         this.x = x;
         this.y = y;
+    }
+
+    public int getContent() {
+        return content;
     }
 
     static boolean allowed(int x, int y) {
@@ -72,5 +78,12 @@ public class Field {
 
     boolean canReach(Field f) {
         return canReach(f.x, f.y);
+    }
+
+    @Override
+    public Field clone() {
+        Field newField = new Field(x, y);
+        newField.content = this.getContent();
+        return newField;
     }
 }

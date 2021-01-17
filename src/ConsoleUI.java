@@ -1,4 +1,6 @@
-public class ConsoleUI implements UI {
+import java.io.Serializable;
+
+public class ConsoleUI implements UI, Serializable {
     @Override
     public void displayBoard(Board b) {
         System.out.print("-\t");
