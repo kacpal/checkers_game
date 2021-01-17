@@ -18,6 +18,10 @@ public class HumanPlayer implements Player {
     }
 
     Field inputToField(String s) {
+        if (s.equals("surrender")) {
+            board.getGameState().surrender(color);
+            return null;
+        }
         Field p = inputToCoordinates(s);
         return board.getField(p.x, p.y);
     }
@@ -62,6 +66,7 @@ public class HumanPlayer implements Player {
         while (true) {
             System.out.print("from> ");
             f = inputToField(scanner.nextLine());
+            if (f == null) return;
             if (f.getColor() != color) {
                 System.out.println("This is not your pawn.");
                 continue;

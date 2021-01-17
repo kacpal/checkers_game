@@ -1,16 +1,7 @@
 
 # roadmap
 3. Stan gry
- - zapakowanie rozgrywki w obiekt
- - obiekt "stan gry" zachowuje informacje o rodzaju gry
- - system punktacji
- - historię ruchów
- - pilnuje kolejności ruchów
- - przegrana po utracie wszystkich pionków
- - zwycięstwo po zbiciu wszystkich pionków przeciwnika
- - możliwość poddania gry
  - zasady remisu
- - podpowiadanie możliwych ruchów?
 
 4. MinMax - algorytm podpowiadający (najlepsze) ruchy.
  - optymalizacja klonowania
@@ -40,11 +31,11 @@ class ComputerPlayer implements Player {}
         int bestScore = isMax ? -1000 : 1000;
         int currentScore = 0;
 
-        ArrayList<Pair> validMoves = generateValidMoves(b, side);
+        ArrayList<FieldPair> validMoves = generateValidMoves(b, side);
         System.out.println(validMoves);
         bestMove = null;
 
-        for (Pair currentMove : validMoves) {
+        for (FieldPair currentMove : validMoves) {
             Board boardClone = b.clone();
 
             int move = boardClone.movePawn(boardClone.getField(currentMove.first.x, currentMove.first.y),
