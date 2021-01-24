@@ -32,11 +32,6 @@ public class Board {
         }
     }
 
-    void setTab(Board newBoard) {
-        // TODO: delete this method
-        this.tab = newBoard.tab;
-    }
-
     void display() {
         ui.displayBoard(this);
     }
