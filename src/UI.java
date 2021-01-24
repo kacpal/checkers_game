@@ -1,5 +1,6 @@
 public interface UI {
     void displayBoard(Board b);
     void displayResults(int result);
-    // void displayMainMenu();
+    void displayString(String s);
+    void displayHello();
 }
