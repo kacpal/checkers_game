@@ -4,25 +4,32 @@ public class Board {
     Field[][] tab;
     int size = 10;
     int pawnRows = 4;
+
     UI ui;
+    GameState gameState;
+
+    Board() {}
 
     Board(UI ui) {
-        tab = new Field[size][size];
         this.ui = ui;
+        this.tab = new Field[size][size];
+        this.gameState = new GameState();
         this.initializeFields();
     }
 
     void initializeFields() {
+        Field f;
         for (int y = 0; y < tab.length; y++) {
             for (int x = 0; x < tab[y].length; x++) {
-                tab[y][x] = new Field(x, y);
-                tab[y][x].inferStartingContent(size, pawnRows);
+                f = tab[y][x] = new Field(x, y);
+                f.inferStartingContent(size, pawnRows);
+                if (f.getColor() == 1) {
+                    gameState.playerA.add(f);
+                } else if (f.getColor() == 2) {
+                    gameState.playerB.add(f);
+                }
             }
         }
-    }
-
-    void set(Board newBoard) {
-        this.tab = newBoard.tab;
     }
 
     void display() {
@@ -33,6 +40,14 @@ public class Board {
         if (y < 0 || x < 0 || x >= size || y >= size)
             return null;
         return tab[y][x];
+    }
+
+    GameState getGameState() {
+        return gameState;
+    }
+
+    boolean areOfOppositeColor(Field a, Field b) {
+        return ((a.getColor() == 1 && b.getColor() == 2) || (a.getColor() == 2 && b.getColor() == 1));
     }
 
     int[] directionTowards(Field f, Field t) {
@@ -59,27 +74,20 @@ public class Board {
     int movePawn(Field a, Field b) {
         // this is also suitable as moveQueen
         int r = -1;
+        // TODO: simplify this condition
         if (!a.isEmpty() && (possibleMoves(a).contains(b) || possibleKills(a).contains(b))) {
+            // move is valid
             r = 0;
+            gameState.updateHistory(a, b);
+            // step over every field until we reach the target
             Field c;
             do {
                 c = stepTowards(a, b);
-                if (!c.isEmpty()) r += 1;
-                moveField(a, c);
-                a = c;
-            } while (c != b);
-        }
-        return r;
-    }
-
-    int movePawnAI(Field a, Field b) {
-        int r = -1;
-        if (!a.isEmpty() && (possibleMoves(a).contains(b) || possibleKills(a).contains(b))) {
-            r = 0;
-            Field c;
-            do {
-                c = stepTowards(a, b);
-                if (!c.isEmpty()) r += 1;
+                if (!c.isEmpty()) {
+                    // we happen to kill
+                    r += 1;
+                    gameState.updateHistory(c, null);
+                }
                 moveField(a, c);
                 a = c;
             } while (c != b);
@@ -92,16 +100,20 @@ public class Board {
         Field b;
         int[][] modifiers;
 
+        // pawns move in one direction only
+        // these modifiers indicate diagonals along which they can move
         if (a.getColor() == 1)
             modifiers = new int[][]{{1, 1}, {-1, 1}};
-        else
+        else if (a.getColor() == 2)
             modifiers = new int[][]{{1, -1}, {-1, -1}};
+        else
+            modifiers = new int[][]{};
 
         for (int[] m : modifiers) {
             b = getField(a.x+m[0], a.y+m[1]);
             if (b != null) {
                  if(b.isEmpty()) r.add(b);
-                 else if(areOpposite(a, b)) {
+                 else if(areOfOppositeColor(a, b)) {
                      // we can reuse b here, because it's not needed outside of this if statement anymore
                      b = stepTowards(a, b, 2);
                      if (b != null && b.isEmpty()) r.add(b);
@@ -114,7 +126,10 @@ public class Board {
     ArrayList<Field> possibleQueenMoves(Field a) {
         ArrayList<Field> r = new ArrayList<Field>();
         Field b;
+
+        // these modifiers indicate diagonals along which we can move
         int[][] modifiers = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+
         for (int[] m : modifiers) {
             b = a;
             while (true) {
@@ -146,14 +161,17 @@ public class Board {
         // p stands for previous, we won't be checking for kills in that direction
         ArrayList<Field> r = new ArrayList<Field>();
         Field b;
-        int[][] modifiers = new int[][]{{1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
 
-        int[] fm = null; // forbidden modifier
+        // modifiers indicate diagonals along which pawns can kill
+        int[][] modifiers = new int[][]{{1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
+        // there might be a forbidden modifier (fm) indicating a diagonal we came from
+        int[] fm = null;
         if (p != null) fm = directionTowards(a, p);
+
         for (int[] m : modifiers) {
             if (m == fm) continue;
             b = getField(a.x+m[0], a.y+m[1]);
-            if (b != null && !b.isEmpty() && areOpposite(a, b)) {
+            if (b != null && !b.isEmpty() && areOfOppositeColor(a, b)) {
                     b = stepTowards(a, b, 2);
                     if (b != null && b.isEmpty()) r.add(b);
             }
@@ -164,9 +182,13 @@ public class Board {
     ArrayList<Field> possibleQueenKills(Field a, Field p) {
         ArrayList<Field> r = new ArrayList<Field>();
         Field b;
+
+        // these modifiers indicate diagonals along which we can kill
         int[][] modifiers = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
-        int[] fm = null; // forbidden modifier
+        // there might be a forbidden modifier (fm) indicating a diagonal we came from
+        int[] fm = null;
         if (p != null) fm = directionTowards(a, p);
+
         for (int[] m : modifiers) {
             if (m == fm) continue;
             b = a;
@@ -187,6 +209,7 @@ public class Board {
     }
 
     ArrayList<Field> possibleKills(Field a, Field p) {
+        // p stands for previous, we won't be checking for kills in that direction
         a.promotePawn(); // redundant, but jic this hasn't been done yet
         if (a.isQueen()) return possibleQueenKills(a, p);
         else return possiblePawnKills(a, p);
@@ -198,24 +221,27 @@ public class Board {
 
     @Override
     public Board clone() {
-        Field[][] table = new Field[size][size];
+        UI newUI = new ConsoleUI();
+        GameState newGameState = new GameState();
+        Field[][] newTable = new Field[size][size];
 
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                table[i][j] = getField(j, i).clone();
+        Field f;
+        for (int y = 0; y < tab.length; y++) {
+            for (int x = 0; x < tab[y].length; x++) {
+                f = newTable[y][x] = getField(x, y).clone();
+                if (f.getColor() == 1) {
+                    newGameState.playerA.add(f);
+                } else if (f.getColor() == 2) {
+                    newGameState.playerB.add(f);
+                }
             }
         }
 
-        UI newUi = new ConsoleUI();
-        Board newBoard = new Board(newUi);
-        newBoard.tab = table;
+        Board newBoard = new Board();
+        newBoard.ui = newUI;
+        newBoard.gameState = newGameState;
+        newBoard.tab = newTable;
 
         return newBoard;
-    }
-
-     Boolean areOpposite(Field a, Field b) {
-        if ( (a.getColor() == 1 && b.getColor() == 2) || (a.getColor() == 2 && b.getColor() == 1) )
-            return true;
-        return false;
     }
 }

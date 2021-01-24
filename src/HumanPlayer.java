@@ -1,81 +1,123 @@
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class HumanPlayer implements Player {
     private Scanner scanner = new Scanner(System.in);
     private int color;
     Board board;
+    UI ui;
 
-    HumanPlayer(Board b, int c) {
+    HumanPlayer(Board b, int c, UI ui) {
         board = b;
         color = c;
+        this.ui = ui;
     }
 
-    static Field inputToCoordinates(String s) {
-        int y = 0+s.charAt(0)-'a';
-        int x = Integer.parseInt(String.valueOf(s.charAt(1)));
-        Field p = new Field(x, y);
-        return p;
-    }
+    class Surrender extends Exception {}
 
-    Field inputToField(String s) {
-        Field p = inputToCoordinates(s);
-        return board.getField(p.x, p.y);
-    }
-
-    void consecutiveMove(Field f) {
-        Field t;
-        board.display();
-        while (true) {
-            System.out.print("to> ");
-            t = inputToField(scanner.nextLine());
-            if (t == f) break;
-            if (!board.possibleKills(f).contains(t)) {
-                System.out.println("Invalid move. You have to kill!");
+    Field parseInput(String prompt) throws Surrender {
+        if (prompt != null) ui.displayString(prompt);
+        String line = scanner.nextLine().toUpperCase().strip();
+        if (line.equals("SURRENDER")) throw new Surrender();
+        int y = 0, x = 0;
+        char c;
+        for (int i = 0; i < line.length(); i++) {
+            c = line.charAt(i);
+            if (Character.isLetter(c)) {
+                y = c - 'A';
+            } else if (Character.isDigit(c)) {
+                x = 10 * x + Integer.parseInt(String.valueOf(c));
             }
-            int move = board.movePawn(f, t);
-            if (move < 0)
-                System.out.println("Invalid move. Try again...");
-            else if (move > 0 && !board.possibleKills(t, f).isEmpty())
-                f = t;
-            else
-                break;
         }
+        Field f = board.getField(x, y);
+        if (f == null) throw new InputMismatchException("invalid coordinates");
+        return f;
+    }
+
+    void handleSurrender() {
+        board.getGameState().surrender(color);
     }
 
     private boolean anyKillPossible() {
-        for (int x = 0; x < board.size; x++) {
-            for (int y = 0; y < board.size; y++) {
-                Field p = board.getField(x, y);
-                if (p.getColor() == color && !board.possibleKills(p).isEmpty())
-                    return true;
-            }
+        for (Field p : board.getGameState().myPawns(color)) {
+            if (!board.possibleKills(p).isEmpty())
+                return true;
         }
         return false;
+    }
+
+    void consecutiveMove(Field f) {
+        // we are making a consecutive move, that means we killed in the previous move
+        // and we will do consecutive kills for as long as we can
+        Field t;
+        // the board changed, so we have to display it once again
+        board.display();
+        while (true) {
+            try {
+                t = parseInput("to> ");
+                if (t == f) throw new InputMismatchException("target destination is a place you are moving from");
+                if (!board.possibleKills(f).contains(t)) throw new InputMismatchException("you must kill");
+            } catch (Surrender e) {
+                handleSurrender();
+                return;
+            } catch (InputMismatchException e) {
+                ui.displayString("Your move is invalid: " + e.getMessage() + ".\n");
+                continue;
+            }
+
+            int move = board.movePawn(f, t);
+            if (move < 0){
+                // the move was invalid
+                ui.displayString("Invalid move. Try again...\n");
+                // retry
+                continue;
+            } else if (move > 0 && !board.possibleKills(t, f).isEmpty()) {
+                // the move was a kill and more kills are possible
+                f = t;
+                continue;
+            } else {
+                // the move was valid and there are no more kills possible
+                // end round
+                break;
+            }
+        }
     }
 
     @Override
     public void nextMove() {
         Field f, t;
-        if (anyKillPossible()) {
-            System.out.println("Killing this turn is possible.");
-        }
+        if (anyKillPossible()) ui.displayString("Killing this turn is possible.\n");
         while (true) {
-            System.out.print("from> ");
-            f = inputToField(scanner.nextLine());
-            if (f.getColor() != color) {
-                System.out.println("This is not your pawn.");
+            try {
+                f = parseInput("from> ");
+                if (f.getColor() != color) throw new InputMismatchException("not your pawn");
+                t = parseInput("to> ");
+                // enforce killing each turn if possible
+                if (anyKillPossible() && !board.possibleKills(f).contains(t)) throw new InputMismatchException("you must kill");
+            } catch (Surrender e) {
+                handleSurrender();
+                return;
+            } catch (InputMismatchException e) {
+                ui.displayString("Your move is invalid: " + e.getMessage() + ".\n");
                 continue;
             }
-            System.out.print("to> ");
-            t = inputToField(scanner.nextLine());
+
+            // make a proper move
             int move = board.movePawn(f, t);
-            if (move < 0)
-                System.out.println("Invalid move. Try again...");
-            else if (move > 0 && !board.possibleKills(t, f).isEmpty()) {
+            if (move < 0){
+                // the move was invalid
+                ui.displayString("Invalid move. Try again...\n");
+                // retry
+                continue;
+            } else if (move > 0 && !board.possibleKills(t, f).isEmpty()) {
+                // the move was a kill and more kills are possible
                 consecutiveMove(t);
+                // end round
                 break;
-            } else
+            } else {
+                // the move was valid, end round
                 break;
+            }
         }
     }
 }

@@ -10,218 +10,41 @@ public class ComputerPlayer implements Player {
         color = c;
     }
 
-    public void nextMove() {
-        board.set(findBestMove(board.clone(), this.color));
-    }
-
-    public Board findBestMove(Board b, int side) {
-        ArrayList<Pair> validMoves = generateValidMoves(b, side);
-        int bestScore = -1000;
-        Board bestBoard = null;
-
-        boolean isKillingTurn = anyKillPossible(b, side);
-
-        for (Pair currentMove : validMoves) {
-            Board boardClone = b.clone();
-
-            int move = boardClone.movePawnAI(boardClone.getField(currentMove.first.x, currentMove.first.y),
-                    boardClone.getField(currentMove.second.x, currentMove.second.y));
-            if (move < 0) {
-                System.out.println("[debug] wrong move");
-                return null;
-            } else {
-                //For consecutive kill moves
-                if (anyKillPossible(boardClone, side) && isKillingTurn) {
-                    boardClone.set(consecutiveMove(boardClone, side));
-                }
-                boardClone.set(promotePawns(boardClone));
-
-                int currentScore = minimax(boardClone, changeColor(side), depth, false, -1000, 1000);
-                if (currentScore > bestScore) {
-                    bestScore = currentScore;
-                    bestBoard = boardClone;
-                }
-            }
-        }
-        return bestBoard;
-    }
-
-    int minimax(Board b, int side, int depth, Boolean isMax, int alpha, int beta) {
-        if (depth < 1) {
-            return evaluate(b);
-        }
-
-        int bestScore;
-
-        boolean isKillingTurn = anyKillPossible(b, side);
-
-        if (isMax) {
-            bestScore = -1000;
-
-            ArrayList<Pair> validMoves;
-
-            if(isKillingTurn) {
-                validMoves = generateValidKills(b, side);
-            } else {
-                validMoves = generateValidMoves(b, side);
-            }
-
-            for (Pair currentMove : validMoves) {
-                Board boardClone = b.clone();
-
-                int move = boardClone.movePawnAI(boardClone.getField(currentMove.first.x, currentMove.first.y),
-                        boardClone.getField(currentMove.second.x, currentMove.second.y));
-                if (move < 0) {
-                    System.out.println("[debug] wrong move");
-                    return 0;
-                } else {
-                    //For consecutive kill moves
-                    if (anyKillPossible(boardClone, side) && isKillingTurn) {
-                        boardClone.set(consecutiveMove(boardClone, side));
-                    }
-                    boardClone.set(promotePawns(boardClone));
-
-                    int currentScore = minimax(boardClone, changeColor(side), depth - 1, !isMax, alpha, beta);
-
-                    bestScore = Math.max(bestScore, currentScore);
-                    alpha = Math.max(alpha, bestScore);
-                    if (alpha >= beta)
-                        break;
-                }
-            }
-        } else {
-            bestScore = 1000;
-
-            ArrayList<Pair> validMoves;
-
-            if(isKillingTurn) {
-                validMoves = generateValidKills(b, side);
-            } else {
-                validMoves = generateValidMoves(b, side);
-            }
-
-            for (Pair currentMove : validMoves) {
-                Board boardClone = b.clone();
-
-                int move = boardClone.movePawnAI(boardClone.getField(currentMove.first.x, currentMove.first.y),
-                        boardClone.getField(currentMove.second.x, currentMove.second.y));
-                if (move < 0) {
-                    System.out.println("[debug] wrong move");
-                    return 0;
-                } else {
-                    //For consecutive kill moves
-                    if (anyKillPossible(boardClone, side) && isKillingTurn) {
-                        boardClone.set(consecutiveMove(boardClone, side));
-                    }
-                    boardClone.set(promotePawns(boardClone));
-
-                    int currentScore = minimax(boardClone, changeColor(side), depth - 1, !isMax, alpha, beta);
-
-                    bestScore = Math.min(bestScore, currentScore);
-                    alpha = Math.min(alpha, bestScore);
-                    if (alpha >= beta)
-                        break;
-                }
-            }
-        }
-        return bestScore;
-    }
-
-    Board promotePawns(Board b) {
-        for (int i=0; i < b.size; i++) {
-            if (b.getField(i, 0).getContent() == 2) {
-                b.getField(i, 0).content = 6;
-            }
-        }
-        for (int i=0; i < b.size; i++) {
-            if (b.getField(i, b.size-1).getContent() == 1) {
-                b.getField(i, b.size - 1).content = 5;
-            }
-        }
-        return b;
-    }
-
-    Board consecutiveMove(Board b, int side) {
-        ArrayList<Pair> validKills = generateValidKills(b, side);
-        int bestScore = -1000;
-        Board bestBoard = null;
-
-        for (Pair currentKill : validKills) {
-            Board boardClone = b.clone();
-
-            int move = boardClone.movePawnAI(boardClone.getField(currentKill.first.x, currentKill.first.y),
-                    boardClone.getField(currentKill.second.x, currentKill.second.y));
-            if (move < 0) {
-                System.out.println("[debug] wrong kill");
-                return null;
-            } else {
-                boardClone.set(promotePawns(boardClone));
-                int currentScore = minimaxConsecutive(boardClone, side);
-                if (currentScore > bestScore) {
-                    bestScore = currentScore;
-                    bestBoard = boardClone;
-                }
-            }
-        }
-        return bestBoard;
-    }
-
-    int minimaxConsecutive(Board b, int side) {
-        if (!anyKillPossible(b, side)) {
-            return evaluate(b);
-        }
-
-        int bestScore = -1000;
-
-        ArrayList<Pair> validKills = generateValidKills(b, side);
-        for (Pair currentKill : validKills) {
-            Board boardClone = b.clone();
-
-            int move = boardClone.movePawnAI(boardClone.getField(currentKill.first.x, currentKill.first.y),
-                    boardClone.getField(currentKill.second.x, currentKill.second.y));
-            if (move < 0) {
-                System.out.println("[debug] wrong minimaxConsecutive move");
-                return 0;
-            } else {
-                boardClone.set(promotePawns(boardClone));
-                int currentScore = minimaxConsecutive(boardClone, side);
-                if (currentScore > bestScore)
-                    bestScore = currentScore;
-            }
-        }
-        return bestScore;
-    }
-
     private boolean anyKillPossible(Board board, int color) {
-        for (int x = 0; x < board.size; x++) {
-            for (int y = 0; y < board.size; y++) {
-                Field p = board.getField(x, y);
-                if (p.getColor() == color && !board.possibleKills(p).isEmpty())
-                    return true;
-            }
+        for (Field p : board.getGameState().myPawns(color)) {
+            if (!board.possibleKills(p).isEmpty())
+                return true;
         }
         return false;
     }
 
-    private boolean anyMovePossible(Board board, int color) {
-        for (int x = 0; x < board.size; x++) {
-            for (int y = 0; y < board.size; y++) {
-                Field p = board.getField(x, y);
-                if (p.getColor() == color && !board.possibleMoves(p).isEmpty())
-                    return true;
-            }
+    ArrayList<FieldPair> generateValidKills(Board board, int color) {
+        ArrayList<FieldPair> r = new ArrayList<FieldPair>();
+        for (Field f : board.getGameState().myPawns(color)) {
+            for (Field t : board.possibleKills(f))
+                r.add(new FieldPair(f, t));
         }
-        return false;
+        return r;
     }
 
-    int evaluate(Board b) {
+    ArrayList<FieldPair> generateValidMoves(Board board, int color) {
+        ArrayList<FieldPair> r = generateValidKills(board, color);
+        if (!r.isEmpty()) return r;
+        for (Field f : board.getGameState().myPawns(color)) {
+            for (Field t : board.possibleMoves(f))
+                r.add(new FieldPair(f, t));
+        }
+        return r;
+    }
+
+    int evaluate(Board board) {
         int result = 0;
         int black = 0, white = 0, black_queen = 0, white_queen = 0;
         int white_weight = 4, white_queen_weight = 10, black_weight = 6, black_queen_weight = 10;
 
-        for (int i = 0; i < b.size; i++) {
-            for (int j = 0; j < b.size; j++) {
-                Field field = b.getField(j, i);
+        for (int i = 0; i < board.size; i++) {
+            for (int j = 0; j < board.size; j++) {
+                Field field = board.getField(j, i);
 
                 switch (field.getColor()) {
                     case 1: white++; break;
@@ -241,78 +64,143 @@ public class ComputerPlayer implements Player {
         return result;
     }
 
-    ArrayList<Pair> generateValidKills(Board b, int color) {
-        ArrayList<Pair> array = new ArrayList<Pair>();
-
-        if (anyKillPossible(b, color)) {
-            for (int x = 0; x < b.size; x++) {
-                for (int y = 0; y < b.size; y++) {
-                    Field from = b.tab[x][y];
-                    if (from.getColor() == color && !b.possibleKills(from).isEmpty()) {
-                        for (int i = 0; i < b.possibleKills(from).size(); i++) {
-                            Pair pair = new Pair();
-                            pair.first = from.clone();
-                            pair.second = b.possibleKills(from).get(i);
-                            array.add(pair);
-                        }
-                    }
-                }
-            }
-            return array;
-        } else
-            return null;
+    int changeColor(int color) {
+        return color ^ 3;
     }
 
-    ArrayList<Pair> generateValidMoves(Board b, int color) {
-        ArrayList<Pair> array = new ArrayList<Pair>();
+    int minimaxConsecutive(Board board, Field from) {
+        // minmax for consecutive moves, kills
+        from = board.getField(from.x, from.y);
+        if (board.possibleKills(from).isEmpty()) {
+            return evaluate(board);
+        }
 
-        if (anyKillPossible(b, color)) {
-            for (int x = 0; x < b.size; x++) {
-                for (int y = 0; y < b.size; y++) {
-                    Field from = b.tab[x][y];
-                    if (from.getColor() == color && !b.possibleKills(from).isEmpty()) {
-                        for (int i = 0; i < b.possibleKills(from).size(); i++) {
-                            Pair pair = new Pair();
-                            pair.first = from.clone();
-                            pair.second = b.possibleKills(from).get(i);
-                            array.add(pair);
-                        }
-                    }
-                }
+        int bestScore = -1000;
+
+        for (Field kill : board.possibleKills(from)) {
+            FieldPair currentKill = new FieldPair(from, kill);
+            Board boardClone = board.clone();
+
+            int move = boardClone.movePawn(boardClone.getField(currentKill.first.x, currentKill.first.y),
+                                           boardClone.getField(currentKill.second.x, currentKill.second.y));
+
+            if (move < 0) {
+                System.err.println("minimaxConsecutive: invalid move, wrong kill");
+                System.err.println(currentKill);
+            } else {
+                int currentScore = minimaxConsecutive(boardClone, kill);
+                if (currentScore > bestScore)
+                    bestScore = currentScore;
             }
-            return array;
-        } else if (anyMovePossible(b, color)) {
-            for (int x = 0; x < b.size; x++) {
-                for (int y = 0; y < b.size; y++) {
-                    Field from = b.tab[x][y];
-                    if (from.getColor() == color && !b.possibleMoves(from).isEmpty()) {
-                        for (int i = 0; i < b.possibleMoves(from).size(); i++) {
-                            Pair pair = new Pair();
-                            pair.first = from.clone();
-                            pair.second = b.possibleMoves(from).get(i);
-                            array.add(pair);
-                        }
-                    }
-                }
-            }
-            return array;
-        } else
-            return null;
+        }
+        return bestScore;
     }
 
-    int changeColor(int col) {
-        if(col == 1)
-            return 2;
-        else return 1;
-    }
-}
+    FieldPair findBestConsecutiveMove(Board board, Field from) {
+        int bestScore = -1000;
+        FieldPair bestMove = null;
+        from = board.getField(from.x, from.y);
 
-class Pair {
-    Field first;
-    Field second;
+        for (Field kill : board.possibleKills(from)) {
+            FieldPair currentKill = new FieldPair(from, kill);
+            Board boardClone = board.clone();
+
+            int move = boardClone.movePawn(boardClone.getField(currentKill.first.x, currentKill.first.y),
+                                           boardClone.getField(currentKill.second.x, currentKill.second.y));
+
+            if (move <= 0) {
+                System.err.println("findBestConsecutiveMove: invalid move, wrong kill");
+                System.err.println(currentKill);
+            } else {
+                int currentScore = minimaxConsecutive(boardClone, kill);
+                if (currentScore > bestScore) {
+                    bestScore = currentScore;
+                    bestMove = currentKill;
+                }
+            }
+        }
+        return bestMove;
+    }
+
+    int minimax(Board board, int side, int depth, boolean isMax, int alpha, int beta) {
+        if (depth < 1) {
+            return evaluate(board);
+        }
+
+        int bestScore = (isMax) ? -1000 : 1000;
+
+        boolean isKillingTurn = anyKillPossible(board, side);
+
+        for (FieldPair currentMove : generateValidMoves(board, side)) {
+            Board boardClone = board.clone();
+
+            int move = boardClone.movePawn(boardClone.getField(currentMove.first.x, currentMove.first.y),
+                    boardClone.getField(currentMove.second.x, currentMove.second.y));
+
+            // for consecutive kill moves
+            FieldPair kill = new FieldPair(null, boardClone.getField(currentMove.second.x, currentMove.second.y));
+            while (isKillingTurn && !boardClone.possibleKills(kill.second).isEmpty()) {
+                kill = findBestConsecutiveMove(boardClone, kill.second);
+                if (kill == null) {
+                    System.err.println("Something went terribly wrong with consecutiveMove of ComputerPlayer's minmax.");
+                    break;
+                }
+                boardClone.movePawn(kill.first, kill.second);
+            }
+
+            int currentScore = minimax(boardClone, changeColor(side), depth - 1, !isMax, alpha, beta);
+            bestScore = (isMax) ? Math.max(bestScore, currentScore) : Math.min(bestScore, currentScore);
+            alpha = (isMax) ? Math.max(alpha, bestScore) : Math.min(alpha, bestScore);
+            if (alpha >= beta) break;
+        }
+        return bestScore;
+    }
+
+    public ArrayList<FieldPair> findBestMove(Board board, int side) {
+        ArrayList<FieldPair> bestMoveSequence = null;
+        int bestScore = -1000;
+
+        boolean isKillingTurn = anyKillPossible(board, side);
+
+        for (FieldPair currentMove : generateValidMoves(board, side)) {
+            // create temporary board to test our moves
+            Board boardClone = board.clone();
+            // create a new move sequence in case this is a killing move
+            ArrayList<FieldPair> currentMoveSequence = new ArrayList<FieldPair>();
+
+            int move = boardClone.movePawn(boardClone.getField(currentMove.first.x, currentMove.first.y),
+                                           boardClone.getField(currentMove.second.x, currentMove.second.y));
+            currentMoveSequence.add(currentMove);
+
+            // for consecutive kill moves
+            FieldPair kill = new FieldPair(null, boardClone.getField(currentMove.second.x, currentMove.second.y));
+            while (isKillingTurn && !boardClone.possibleKills(kill.second).isEmpty()) {
+                kill = findBestConsecutiveMove(boardClone, kill.second);
+                if (kill == null) {
+                    System.err.println("Something went terribly wrong with consecutiveMove of ComputerPlayer.");
+                    break;
+                }
+                boardClone.movePawn(kill.first, kill.second);
+                currentMoveSequence.add(new FieldPair(board.getField(kill.first.x, kill.first.y),
+                                                      board.getField(kill.second.x, kill.second.y)));
+            }
+
+            int currentScore = minimax(boardClone, changeColor(side), depth, false, -1000, 1000);
+            if (currentScore > bestScore) {
+                bestScore = currentScore;
+                bestMoveSequence = currentMoveSequence;
+            }
+        }
+        return bestMoveSequence;
+    }
 
     @Override
-    public String toString() {
-        return (first.x+"-"+first.y+" to "+second.x+"-"+second.y);
+    public void nextMove() {
+        ArrayList<FieldPair> moves = findBestMove(board, color);
+        if (moves == null) board.getGameState().surrender(color);
+        else for (FieldPair m : moves) {
+            System.out.println(m);
+            board.movePawn(m.first, m.second);
+        }
     }
 }

@@ -1,5 +1,3 @@
 public interface Player {
-    public void nextMove() throws CloneNotSupportedException;
+    public void nextMove();
 }
-
-// WIP
