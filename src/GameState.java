@@ -5,9 +5,6 @@ public class GameState {
     ArrayList<Field> playerA;
     ArrayList<Field> playerB;
 
-    boolean playerAStale = false;
-    boolean playerBStale = false;
-
     GameState() {
         history = new ArrayList<FieldPair>();
         playerA = new ArrayList<Field>();
@@ -25,7 +22,10 @@ public class GameState {
 
     void updateHistory(Field f, Field t) {
         history.add(new FieldPair(f, t));
+        // passing t as null means the piece was removed from the board (killed)
         if (t != null) {
+            // only one player owns a piece occupying given field, here we infer which one
+            // and append target destination field to the list of their controlled pieces
             if (playerA.contains(f))
                 playerA.add(t);
             else if (playerB.contains(f))
@@ -33,16 +33,6 @@ public class GameState {
         }
         playerA.remove(f);
         playerB.remove(f);
-    }
-
-    void setStale(int color) {
-        if (color == 1) playerAStale = true;
-        else if (color == 2) playerBStale = true;
-    }
-
-    void unsetStale(int color) {
-        if (color == 1) playerAStale = false;
-        else if (color == 2) playerBStale = false;
     }
 
     void surrender(int color) {
@@ -53,12 +43,12 @@ public class GameState {
     }
 
     int gameover() {
-        if (playerA.isEmpty() || (playerAStale && !playerBStale))
-            return 2;
-        if (playerB.isEmpty() || (playerBStale && !playerAStale))
-            return 1;
-        if (playerAStale && playerBStale)
+        if (playerA.isEmpty() && playerB.isEmpty())
             return 3;
+        if (playerA.isEmpty())
+            return 2;
+        if (playerB.isEmpty())
+            return 1;
         return 0;
     }
 }
