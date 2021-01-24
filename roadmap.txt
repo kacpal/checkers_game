@@ -1,27 +1,14 @@
 
 # roadmap
-3. Stan gry
- - zasady remisu
-
 4. MinMax - algorytm podpowiadający (najlepsze) ruchy.
  - optymalizacja klonowania
  - alpha-beta pruning
  - wymuszanie wielokrotnego bicia w razie takiej możliwości
  - optymalizacja oceniania wartości planszy (można wziąć pod uwagę pozycje przy ścianach)
 
----
-
-5. GUI
-6. Efekty dźwiękowe
-7. Gra sieciowa
-8. Inne warianty gry w warcaby?
-
-
 # work-in-progress
 
-interfaces
 minmaxAI
-
 
 # scratchpad
 
@@ -63,5 +50,3 @@ class ComputerPlayer implements Player {}
 
  */
 
-Może warto by wiedzieć, jakie pionki posiada gracz? Ile ich zostało i na jakich są polach.
-Do rozważenia - ew. implementacja w klasie HumanPlayer.
