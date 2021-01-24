@@ -68,25 +68,27 @@ public class ComputerPlayer implements Player {
         return color ^ 3;
     }
 
-    int minimaxConsecutive(Board board, int side) {
+    int minimaxConsecutive(Board board, Field from) {
         // minmax for consecutive moves, kills
-        if (!anyKillPossible(board, side)) {
+        from = board.getField(from.x, from.y);
+        if (board.possibleKills(from).isEmpty()) {
             return evaluate(board);
         }
 
         int bestScore = -1000;
 
-        for (FieldPair currentKill : generateValidKills(board, side)) {
+        for (Field kill : board.possibleKills(from)) {
+            FieldPair currentKill = new FieldPair(from, kill);
             Board boardClone = board.clone();
 
             int move = boardClone.movePawn(boardClone.getField(currentKill.first.x, currentKill.first.y),
                                            boardClone.getField(currentKill.second.x, currentKill.second.y));
 
             if (move < 0) {
-                System.err.println("[debug] wrong minimaxConsecutive move");
-                continue;
+                System.err.println("minimaxConsecutive: invalid move, wrong kill");
+                System.err.println(currentKill);
             } else {
-                int currentScore = minimaxConsecutive(boardClone, side);
+                int currentScore = minimaxConsecutive(boardClone, kill);
                 if (currentScore > bestScore)
                     bestScore = currentScore;
             }
@@ -94,21 +96,23 @@ public class ComputerPlayer implements Player {
         return bestScore;
     }
 
-    FieldPair findBestConsecutiveMove(Board board, int side) {
+    FieldPair findBestConsecutiveMove(Board board, Field from) {
         int bestScore = -1000;
         FieldPair bestMove = null;
+        from = board.getField(from.x, from.y);
 
-        for (FieldPair currentKill : generateValidKills(board, side)) {
+        for (Field kill : board.possibleKills(from)) {
+            FieldPair currentKill = new FieldPair(from, kill);
             Board boardClone = board.clone();
 
             int move = boardClone.movePawn(boardClone.getField(currentKill.first.x, currentKill.first.y),
                                            boardClone.getField(currentKill.second.x, currentKill.second.y));
 
             if (move <= 0) {
-                System.err.println("[debug] minmax made a wrong kill");
-                continue;
+                System.err.println("findBestConsecutiveMove: invalid move, wrong kill");
+                System.err.println(currentKill);
             } else {
-                int currentScore = minimaxConsecutive(boardClone, side);
+                int currentScore = minimaxConsecutive(boardClone, kill);
                 if (currentScore > bestScore) {
                     bestScore = currentScore;
                     bestMove = currentKill;
@@ -134,10 +138,11 @@ public class ComputerPlayer implements Player {
                     boardClone.getField(currentMove.second.x, currentMove.second.y));
 
             // for consecutive kill moves
-            while (isKillingTurn && anyKillPossible(boardClone, side)) {
-                FieldPair kill = findBestConsecutiveMove(boardClone, side);
+            FieldPair kill = new FieldPair(null, boardClone.getField(currentMove.second.x, currentMove.second.y));
+            while (isKillingTurn && !boardClone.possibleKills(kill.second).isEmpty()) {
+                kill = findBestConsecutiveMove(boardClone, kill.second);
                 if (kill == null) {
-                    System.err.println("Something went terribly wrong with consecutiveMove of ComputerPlayer.");
+                    System.err.println("Something went terribly wrong with consecutiveMove of ComputerPlayer's minmax.");
                     break;
                 }
                 boardClone.movePawn(kill.first, kill.second);
@@ -168,8 +173,9 @@ public class ComputerPlayer implements Player {
             currentMoveSequence.add(currentMove);
 
             // for consecutive kill moves
-            while (isKillingTurn && anyKillPossible(boardClone, side)) {
-                FieldPair kill = findBestConsecutiveMove(boardClone, side);
+            FieldPair kill = new FieldPair(null, boardClone.getField(currentMove.second.x, currentMove.second.y));
+            while (isKillingTurn && !boardClone.possibleKills(kill.second).isEmpty()) {
+                kill = findBestConsecutiveMove(boardClone, kill.second);
                 if (kill == null) {
                     System.err.println("Something went terribly wrong with consecutiveMove of ComputerPlayer.");
                     break;
