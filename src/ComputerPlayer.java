@@ -1,16 +1,18 @@
 import java.util.ArrayList;
 
 public class ComputerPlayer implements Player {
-    private int color;
+    private Pawn color;
     private int depth = 5;
     Board board;
+    UI ui;
 
-    ComputerPlayer(Board b, int c) {
+    ComputerPlayer(Board b, Pawn c, UI ui) {
         board = b;
         color = c;
+        this.ui = ui;
     }
 
-    private boolean anyKillPossible(Board board, int color) {
+    private boolean anyKillPossible(Board board, Pawn color) {
         for (Field p : board.getGameState().myPawns(color)) {
             if (!board.possibleKills(p).isEmpty())
                 return true;
@@ -18,7 +20,7 @@ public class ComputerPlayer implements Player {
         return false;
     }
 
-    ArrayList<FieldPair> generateValidKills(Board board, int color) {
+    ArrayList<FieldPair> generateValidKills(Board board, Pawn color) {
         ArrayList<FieldPair> r = new ArrayList<FieldPair>();
         for (Field f : board.getGameState().myPawns(color)) {
             for (Field t : board.possibleKills(f))
@@ -27,7 +29,7 @@ public class ComputerPlayer implements Player {
         return r;
     }
 
-    ArrayList<FieldPair> generateValidMoves(Board board, int color) {
+    ArrayList<FieldPair> generateValidMoves(Board board, Pawn color) {
         ArrayList<FieldPair> r = generateValidKills(board, color);
         if (!r.isEmpty()) return r;
         for (Field f : board.getGameState().myPawns(color)) {
@@ -46,7 +48,7 @@ public class ComputerPlayer implements Player {
             for (int j = 0; j < board.size; j++) {
                 Field field = board.getField(j, i);
 
-                switch (field.getColor()) {
+                switch (field.getColor().getIntValue()) {
                     case 1: white++; break;
                     case 2: black++; break;
                     case 5: white_queen++; break;
@@ -56,7 +58,7 @@ public class ComputerPlayer implements Player {
             }
         }
 
-        if (color == 1)
+        if (color == Pawn.BLACK)
             result = white*white_weight + white_queen*white_queen_weight - black*black_weight - black_queen*black_queen_weight;
         else
             result = black*black_weight + black_queen*black_queen_weight - white*white_weight - white_queen*white_queen_weight;
@@ -64,8 +66,10 @@ public class ComputerPlayer implements Player {
         return result;
     }
 
-    int changeColor(int color) {
-        return color ^ 3;
+    Pawn changeColor(Pawn color) {
+        if (color == Pawn.BLACK)
+            return Pawn.WHITE;
+        else return Pawn.BLACK;
     }
 
     int minimaxConsecutive(Board board, Field from) {
@@ -122,7 +126,7 @@ public class ComputerPlayer implements Player {
         return bestMove;
     }
 
-    int minimax(Board board, int side, int depth, boolean isMax, int alpha, int beta) {
+    int minimax(Board board, Pawn side, int depth, boolean isMax, int alpha, int beta) {
         if (depth < 1) {
             return evaluate(board);
         }
@@ -156,7 +160,7 @@ public class ComputerPlayer implements Player {
         return bestScore;
     }
 
-    public ArrayList<FieldPair> findBestMove(Board board, int side) {
+    public ArrayList<FieldPair> findBestMove(Board board, Pawn side) {
         ArrayList<FieldPair> bestMoveSequence = null;
         int bestScore = -1000;
 
@@ -199,7 +203,7 @@ public class ComputerPlayer implements Player {
         ArrayList<FieldPair> moves = findBestMove(board, color);
         if (moves == null) board.getGameState().surrender(color);
         else for (FieldPair m : moves) {
-            System.out.println(m);
+            ui.displayString(m + "\n");
             board.movePawn(m.first, m.second);
         }
     }

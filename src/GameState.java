@@ -11,10 +11,10 @@ public class GameState {
         playerB = new ArrayList<Field>();
     }
 
-    ArrayList<Field> myPawns(int color) {
-        if (color == 1)
+    ArrayList<Field> myPawns(Pawn color) {
+        if (color == Pawn.BLACK)
             return playerA;
-        else if (color == 2)
+        else if (color == Pawn.WHITE)
             return playerB;
         else
             return null;
@@ -35,10 +35,10 @@ public class GameState {
         playerB.remove(f);
     }
 
-    void surrender(int color) {
-        if (color == 1)
+    void surrender(Pawn color) {
+        if (color == Pawn.BLACK)
             playerA.clear();
-        else if (color == 2)
+        else if (color == Pawn.WHITE)
             playerB.clear();
     }
 

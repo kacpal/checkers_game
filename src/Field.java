@@ -1,17 +1,16 @@
 import java.io.*;
 
 public class Field implements Serializable {
-    int content = 0;
+    Pawn content = Pawn.EMPTY;
+    int boardsize;
     int x, y;
-
-    private int promotionColor = 0;
 
     Field(int x, int y) {
         this.x = x;
         this.y = y;
     }
 
-    public int getContent() {
+    public Pawn getContent() {
         return content;
     }
 
@@ -20,49 +19,50 @@ public class Field implements Serializable {
     }
 
     void setEmpty() {
-        content = 0;
+        content = Pawn.EMPTY;
     }
 
     boolean isEmpty() {
-        return (content == 0);
+        return (content == Pawn.EMPTY);
     }
 
     boolean isQueen() {
-        return ((content & 4) > 0);
+        return (content == Pawn.BLACK_QUEEN || content == Pawn.WHITE_QUEEN);
     }
 
-    int getColor() {
-        // 01 is White, 10 is Black
-        return (content & 3);
+    Pawn getColor() {
+        if (content == Pawn.BLACK || content == Pawn.BLACK_QUEEN)
+            return Pawn.BLACK;
+        else if (content == Pawn.WHITE || content == Pawn.WHITE_QUEEN)
+            return Pawn.WHITE;
+        else return Pawn.EMPTY;
     }
 
     boolean allowed() {
         return allowed(x, y);
     }
 
-    private void setPromotionField(int boardsize) {
-        if (y == 0) promotionColor = 2;
-        else if (y == (boardsize - 1)) promotionColor = 1;
-        else promotionColor = 0;
-    }
-
-    int getPromotionColor() {
-        return promotionColor;
+    private boolean canPromote() {
+        if (y == 0 && content == Pawn.WHITE)
+            return true;
+        else if (y == boardsize - 1 && content == Pawn.BLACK)
+            return true;
+        else return false;
     }
 
     void promotePawn() {
-        if (getColor() == getPromotionColor())
-            content |= 4;
+        if (content.promote() != Pawn.EMPTY && canPromote())
+            content = content.promote();
     }
 
     void inferStartingContent(int boardsize, int pawnRows) {
-        setPromotionField(boardsize);
+        this.boardsize = boardsize;
         if (allowed(x, y)) {
-            if (y > boardsize - pawnRows - 1) content = 2;
-            else if (y < pawnRows) content = 1;
-            else content = 0;
+            if (y > boardsize - pawnRows - 1) content = Pawn.WHITE;
+            else if (y < pawnRows) content = Pawn.BLACK;
+            else content = Pawn.EMPTY;
         } else {
-            content = -1;
+            content = Pawn.FILLER;
         }
     }
 
