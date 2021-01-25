@@ -7,9 +7,9 @@ public class HumanPlayer implements Player {
     Board board;
     UI ui;
 
-    HumanPlayer(Board b, Pawn c, UI ui) {
-        board = b;
-        color = c;
+    HumanPlayer(Board board, Pawn color, UI ui) {
+        this.board = board;
+        this.color = color;
         this.ui = ui;
     }
 
@@ -21,6 +21,8 @@ public class HumanPlayer implements Player {
         if (line.equals("SURRENDER")) throw new Surrender();
         int y = 0, x = 0;
         char c;
+
+        // convert characters to integer coordinates
         for (int i = 0; i < line.length(); i++) {
             c = line.charAt(i);
             if (Character.isLetter(c)) {

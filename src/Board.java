@@ -18,15 +18,16 @@ public class Board {
     }
 
     void initializeFields() {
-        Field f;
+        Field field;
         for (int y = 0; y < tab.length; y++) {
             for (int x = 0; x < tab[y].length; x++) {
-                f = tab[y][x] = new Field(x, y);
-                f.inferStartingContent(size, pawnRows);
-                if (f.getColor() == Pawn.BLACK) {
-                    gameState.playerA.add(f);
-                } else if (f.getColor() == Pawn.WHITE) {
-                    gameState.playerB.add(f);
+                field = tab[y][x] = new Field(x, y);
+                // Set field's color, according to it's position on the board
+                field.inferStartingContent(size, pawnRows);
+                if (field.getColor() == Pawn.BLACK) {
+                    gameState.playerA.add(field);
+                } else if (field.getColor() == Pawn.WHITE) {
+                    gameState.playerB.add(field);
                 }
             }
         }
@@ -51,98 +52,103 @@ public class Board {
                 || (a.getColor() == Pawn.WHITE && b.getColor() == Pawn.BLACK));
     }
 
-    int[] directionTowards(Field f, Field t) {
-        int dx = Integer.signum(t.x - f.x);
-        int dy = Integer.signum(t.y - f.y);
+    int[] directionTowards(Field from, Field to) {
+        int dx = Integer.signum(to.x - from.x);
+        int dy = Integer.signum(to.y - from.y);
         return new int[]{dx, dy};
     }
 
-    Field stepTowards(Field f, Field t, int steps) {
-        int[] m = directionTowards(f, t);
-        return getField(f.x + (steps * m[0]), f.y + (steps * m[1]));
+    Field stepTowards(Field from, Field to, int steps) {
+        int[] m = directionTowards(from, to);
+        return getField(from.x + (steps * m[0]), from.y + (steps * m[1]));
     }
 
-    Field stepTowards(Field f, Field t) {
-        return stepTowards(f, t, 1);
+    Field stepTowards(Field from, Field to) {
+        return stepTowards(from, to, 1);
     }
 
-    void moveField(Field f, Field t) {
-        t.content = f.content;
-        t.promotePawn();
-        f.setEmpty();
+    void moveField(Field from, Field to) {
+        to.content = from.content;
+        to.promotePawn();
+        from.setEmpty();
     }
 
-    int movePawn(Field a, Field b) {
-        // this is also suitable as moveQueen
-        int r = -1;
-        if (!a.isEmpty() && (possibleMoves(a).contains(b) || possibleKills(a).contains(b))) {
+    int movePawn(Field from, Field to) {
+        int result = -1;
+        if (!from.isEmpty() && (possibleMoves(from).contains(to) || possibleKills(from).contains(to))) {
             // move is valid
-            r = 0;
-            gameState.updateHistory(a, b);
+            result = 0;
+            gameState.updateHistory(from, to);
             // step over every field until we reach the target
-            Field c;
+            Field step;
             do {
-                c = stepTowards(a, b);
-                if (!c.isEmpty()) {
+                step = stepTowards(from, to);
+                if (!step.isEmpty()) {
                     // we happen to kill
-                    r += 1;
-                    gameState.updateHistory(c, null);
+                    result += 1;
+                    gameState.updateHistory(step, null);
                 }
-                moveField(a, c);
-                a = c;
-            } while (c != b);
+                moveField(from, step);
+                from = step;
+            } while (step != to);
         }
-        return r;
+        return result;
     }
 
-    ArrayList<Field> possiblePawnMoves(Field a) {
-        ArrayList<Field> r = new ArrayList<Field>();
-        Field b;
+    /*
+    Finds all proper moves for provided field with normal pawn.
+    */
+    ArrayList<Field> possiblePawnMoves(Field from) {
+        ArrayList<Field> result = new ArrayList<Field>();
+        Field to;
         int[][] modifiers;
 
         // pawns move in one direction only
         // these modifiers indicate diagonals along which they can move
-        if (a.getColor() == Pawn.BLACK)
+        if (from.getColor() == Pawn.BLACK)
             modifiers = new int[][]{{1, 1}, {-1, 1}};
-        else if (a.getColor() == Pawn.WHITE)
+        else if (from.getColor() == Pawn.WHITE)
             modifiers = new int[][]{{1, -1}, {-1, -1}};
         else
             modifiers = new int[][]{};
 
         for (int[] m : modifiers) {
-            b = getField(a.x+m[0], a.y+m[1]);
-            if (b != null) {
-                 if(b.isEmpty()) r.add(b);
-                 else if(areOfOppositeColor(a, b)) {
-                     // we can reuse b here, because it's not needed outside of this if statement anymore
-                     b = stepTowards(a, b, 2);
-                     if (b != null && b.isEmpty()) r.add(b);
+            to = getField(from.x+m[0], from.y+m[1]);
+            if (to != null) {
+                // if field 'to' not empty, check whether kill is possible
+                 if(to.isEmpty()) result.add(to);
+                 else if(areOfOppositeColor(from, to)) {
+                     to = stepTowards(from, to, 2);
+                     if (to != null && to.isEmpty()) result.add(to);
                  }
             }
         }
-        return r;
+        return result;
     }
 
-    ArrayList<Field> possibleQueenMoves(Field a) {
+    /*
+    Finds all proper moves for provided field with queen pawn.
+     */
+    ArrayList<Field> possibleQueenMoves(Field from) {
         ArrayList<Field> r = new ArrayList<Field>();
-        Field b;
+        Field to;
 
         // these modifiers indicate diagonals along which we can move
         int[][] modifiers = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
 
         for (int[] m : modifiers) {
-            b = a;
+            to = from;
             while (true) {
-                b = getField(b.x + m[0], b.y + m[1]);
-                if (b != null) {
-                    if (b.isEmpty()) {
-                        r.add(b);
-                        // this loop kinda feels like a goto
+                to = getField(to.x + m[0], to.y + m[1]);
+                if (to != null) {
+                    // if field 'to' not empty, check whether kill is possible
+                    if (to.isEmpty()) {
+                        r.add(to);
                         continue;
-                    } else if (b.getColor() != a.getColor()) {
+                    } else if (to.getColor() != from.getColor()) {
                         // step over b and check whether we land on a valid field
-                        b = getField(b.x + m[0], b.y + m[1]);
-                        if (b != null && b.isEmpty()) r.add(b);
+                        to = getField(to.x + m[0], to.y + m[1]);
+                        if (to != null && to.isEmpty()) r.add(to);
                     }
                 }
                 break;
@@ -151,68 +157,88 @@ public class Board {
         return r;
     }
 
-    ArrayList<Field> possibleMoves(Field a) {
-        a.promotePawn(); // redundant, but jic this hasn't been done yet
-        if (a.isQueen()) return possibleQueenMoves(a);
-        else return possiblePawnMoves(a);
+    /*
+    Finds all proper moves for provided field with pawn.
+    Gives proper output for both, queen and normal pawn.
+    */
+    ArrayList<Field> possibleMoves(Field from) {
+        from.promotePawn();
+        if (from.isQueen()) return possibleQueenMoves(from);
+        else return possiblePawnMoves(from);
     }
 
-    ArrayList<Field> possiblePawnKills(Field a, Field p) {
-        // p stands for previous, we won't be checking for kills in that direction
+    /*
+    Finds all proper killing moves for provided field with normal pawn.
+    Parameter previous is necessary in order to prevent pawn from jumping
+    over pawn, that has been killed in previous step. We won't be checking
+    moves in this direction. If there was no previous step, we provide null.
+    */
+    ArrayList<Field> possiblePawnKills(Field from, Field previous) {
         ArrayList<Field> r = new ArrayList<Field>();
-        Field b;
+        Field to;
 
         // modifiers indicate diagonals along which pawns can kill
         int[][] modifiers = new int[][]{{1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
         // there might be a forbidden modifier (fm) indicating a diagonal we came from
         int[] fm = null;
-        if (p != null) fm = directionTowards(a, p);
+        if (previous != null) fm = directionTowards(from, previous);
 
         for (int[] m : modifiers) {
+            // check whether move in this direction is forbidden
             if (m == fm) continue;
-            b = getField(a.x+m[0], a.y+m[1]);
-            if (b != null && !b.isEmpty() && areOfOppositeColor(a, b)) {
-                    b = stepTowards(a, b, 2);
-                    if (b != null && b.isEmpty()) r.add(b);
+            to = getField(from.x+m[0], from.y+m[1]);
+            if (to != null && !to.isEmpty() && areOfOppositeColor(from, to)) {
+                to = stepTowards(from, to, 2);
+                    if (to != null && to.isEmpty()) r.add(to);
             }
         }
         return r;
     }
 
-    ArrayList<Field> possibleQueenKills(Field a, Field p) {
-        ArrayList<Field> r = new ArrayList<Field>();
-        Field b;
+    /*
+    Finds all proper killing moves for provided field with queen pawn.
+    Parameter previous is necessary in order to prevent pawn from jumping
+    over pawn, that has been killed in previous step. We won't be checking
+    moves in this direction. If there was no previous step, we provide null.
+     */
+    ArrayList<Field> possibleQueenKills(Field from, Field previous) {
+        ArrayList<Field> result = new ArrayList<Field>();
+        Field to;
 
         // these modifiers indicate diagonals along which we can kill
         int[][] modifiers = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
         // there might be a forbidden modifier (fm) indicating a diagonal we came from
         int[] fm = null;
-        if (p != null) fm = directionTowards(a, p);
+        if (previous != null) fm = directionTowards(from, previous);
 
         for (int[] m : modifiers) {
+            // check whether move in this direction is forbidden
             if (m == fm) continue;
-            b = a;
+            to = from;
             while (true) {
-                b = getField(b.x + m[0], b.y + m[1]);
-                if (b != null) {
-                    if (b.isEmpty()) continue;
-                    else if (b.getColor() != a.getColor()) {
+                to = getField(to.x + m[0], to.y + m[1]);
+                if (to != null) {
+                    if (to.isEmpty()) continue;
+                    else if (to.getColor() != from.getColor()) {
                         // step over b and check whether we land on a valid field
-                        b = getField(b.x + m[0], b.y + m[1]);
-                        if (b != null && b.isEmpty()) r.add(b);
+                        to = getField(to.x + m[0], to.y + m[1]);
+                        if (to != null && to.isEmpty()) result.add(to);
                     }
                 }
                 break;
             }
         }
-        return r;
+        return result;
     }
 
-    ArrayList<Field> possibleKills(Field a, Field p) {
-        // p stands for previous, we won't be checking for kills in that direction
-        a.promotePawn(); // redundant, but jic this hasn't been done yet
-        if (a.isQueen()) return possibleQueenKills(a, p);
-        else return possiblePawnKills(a, p);
+    /*
+    Finds all proper kill moves for provided field with pawn.
+    Gives proper output for both, queen and normal pawn.
+    */
+    ArrayList<Field> possibleKills(Field from, Field previous) {
+        from.promotePawn();
+        if (from.isQueen()) return possibleQueenKills(from, previous);
+        else return possiblePawnKills(from, previous);
     }
 
     ArrayList<Field> possibleKills(Field a) {

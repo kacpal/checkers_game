@@ -20,19 +20,19 @@ public class GameState {
             return null;
     }
 
-    void updateHistory(Field f, Field t) {
-        history.add(new FieldPair(f, t));
+    void updateHistory(Field from, Field to) {
+        history.add(new FieldPair(from, to));
         // passing t as null means the piece was removed from the board (killed)
-        if (t != null) {
+        if (to != null) {
             // only one player owns a piece occupying given field, here we infer which one
             // and append target destination field to the list of their controlled pieces
-            if (playerA.contains(f))
-                playerA.add(t);
-            else if (playerB.contains(f))
-                playerB.add(t);
+            if (playerA.contains(from))
+                playerA.add(to);
+            else if (playerB.contains(from))
+                playerB.add(to);
         }
-        playerA.remove(f);
-        playerB.remove(f);
+        playerA.remove(from);
+        playerB.remove(from);
     }
 
     void surrender(Pawn color) {
