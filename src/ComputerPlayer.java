@@ -6,9 +6,9 @@ public class ComputerPlayer implements Player {
     Board board;
     UI ui;
 
-    ComputerPlayer(Board b, Pawn c, UI ui) {
-        board = b;
-        color = c;
+    ComputerPlayer(Board board, Pawn color, UI ui) {
+        this.board = board;
+        this.color = color;
         this.ui = ui;
     }
 
@@ -21,24 +21,31 @@ public class ComputerPlayer implements Player {
     }
 
     ArrayList<FieldPair> generateValidKills(Board board, Pawn color) {
-        ArrayList<FieldPair> r = new ArrayList<FieldPair>();
-        for (Field f : board.getGameState().myPawns(color)) {
-            for (Field t : board.possibleKills(f))
-                r.add(new FieldPair(f, t));
+        ArrayList<FieldPair> result = new ArrayList<FieldPair>();
+        for (Field from : board.getGameState().myPawns(color)) {
+            for (Field to : board.possibleKills(from))
+                result.add(new FieldPair(from, to));
         }
-        return r;
+        return result;
     }
 
     ArrayList<FieldPair> generateValidMoves(Board board, Pawn color) {
-        ArrayList<FieldPair> r = generateValidKills(board, color);
-        if (!r.isEmpty()) return r;
-        for (Field f : board.getGameState().myPawns(color)) {
-            for (Field t : board.possibleMoves(f))
-                r.add(new FieldPair(f, t));
+        ArrayList<FieldPair> result = generateValidKills(board, color);
+
+        // since killing is always obligatory, there's no need to search for non-killing
+        // moves if we already have killing moves in our result array
+        if (!result.isEmpty()) return result;
+        for (Field from : board.getGameState().myPawns(color)) {
+            for (Field to : board.possibleMoves(from))
+                result.add(new FieldPair(from, to));
         }
-        return r;
+        return result;
     }
 
+    /*
+    Evaluates the board score, basing on number of pawns.
+    The weights are optimized to make algorithm gameplay less "kamikaze".
+     */
     int evaluate(Board board) {
         int result = 0;
         int black = 0, white = 0, black_queen = 0, white_queen = 0;
@@ -72,8 +79,11 @@ public class ComputerPlayer implements Player {
         else return Pawn.BLACK;
     }
 
+    /*
+    Equivalent class of minimax, but for multiple jumps (kills) in one move.
+    It differs because for every consecutive move, side is not being changed.
+     */
     int minimaxConsecutive(Board board, Field from) {
-        // minmax for consecutive moves, kills
         from = board.getField(from.x, from.y);
         if (board.possibleKills(from).isEmpty()) {
             return evaluate(board);
@@ -100,6 +110,9 @@ public class ComputerPlayer implements Player {
         return bestScore;
     }
 
+    /*
+    Equivalent class of findBestMove, but for multiple jumps (kills) in one move.
+     */
     FieldPair findBestConsecutiveMove(Board board, Field from) {
         int bestScore = -1000;
         FieldPair bestMove = null;
@@ -135,14 +148,19 @@ public class ComputerPlayer implements Player {
 
         boolean isKillingTurn = anyKillPossible(board, side);
 
+        // iterate through every pair with correct "from, to" move
         for (FieldPair currentMove : generateValidMoves(board, side)) {
+
+            // create temporary board to test our moves
             Board boardClone = board.clone();
 
+            // create a new move sequence in case this is a killing move
             int move = boardClone.movePawn(boardClone.getField(currentMove.first.x, currentMove.first.y),
                     boardClone.getField(currentMove.second.x, currentMove.second.y));
 
-            // for consecutive kill moves
             FieldPair kill = new FieldPair(null, boardClone.getField(currentMove.second.x, currentMove.second.y));
+
+            // if this is killing move, continue until there are no more possible consecutive (killing) moves
             while (isKillingTurn && !boardClone.possibleKills(kill.second).isEmpty()) {
                 kill = findBestConsecutiveMove(boardClone, kill.second);
                 if (kill == null) {
@@ -153,6 +171,8 @@ public class ComputerPlayer implements Player {
             }
 
             int currentScore = minimax(boardClone, changeColor(side), depth - 1, !isMax, alpha, beta);
+
+            // alpha-beta pruning
             bestScore = (isMax) ? Math.max(bestScore, currentScore) : Math.min(bestScore, currentScore);
             alpha = (isMax) ? Math.max(alpha, bestScore) : Math.min(alpha, bestScore);
             if (alpha >= beta) break;
@@ -160,15 +180,21 @@ public class ComputerPlayer implements Player {
         return bestScore;
     }
 
+    /*
+    Returns list of best found possible move sequence, based on minimax algorithm.
+     */
     public ArrayList<FieldPair> findBestMove(Board board, Pawn side) {
         ArrayList<FieldPair> bestMoveSequence = null;
         int bestScore = -1000;
 
         boolean isKillingTurn = anyKillPossible(board, side);
 
+        // iterate through every pair with correct "from, to" move
         for (FieldPair currentMove : generateValidMoves(board, side)) {
+
             // create temporary board to test our moves
             Board boardClone = board.clone();
+
             // create a new move sequence in case this is a killing move
             ArrayList<FieldPair> currentMoveSequence = new ArrayList<FieldPair>();
 
@@ -176,8 +202,9 @@ public class ComputerPlayer implements Player {
                                            boardClone.getField(currentMove.second.x, currentMove.second.y));
             currentMoveSequence.add(currentMove);
 
-            // for consecutive kill moves
             FieldPair kill = new FieldPair(null, boardClone.getField(currentMove.second.x, currentMove.second.y));
+
+            // if this is killing move, continue until there are no more possible consecutive (killing) moves
             while (isKillingTurn && !boardClone.possibleKills(kill.second).isEmpty()) {
                 kill = findBestConsecutiveMove(boardClone, kill.second);
                 if (kill == null) {

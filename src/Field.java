@@ -14,6 +14,9 @@ public class Field implements Serializable {
         return content;
     }
 
+    /*
+    Checks if position of the pawn is legal on current filed, basing on coordinate's parity.
+     */
     static boolean allowed(int x, int y) {
         return ((x % 2 == 1 && y % 2 == 0) || (x % 2 == 0 && y % 2 == 1));
     }
@@ -42,6 +45,9 @@ public class Field implements Serializable {
         return allowed(x, y);
     }
 
+    /*
+    Checks if pawn is on opposed border field, so it can promote.
+     */
     private boolean canPromote() {
         if (y == 0 && content == Pawn.WHITE)
             return true;
@@ -55,6 +61,9 @@ public class Field implements Serializable {
             content = content.promote();
     }
 
+    /*
+    Initial method for placing the pawns.
+     */
     void inferStartingContent(int boardsize, int pawnRows) {
         this.boardsize = boardsize;
         if (allowed(x, y)) {
