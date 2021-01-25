@@ -1,12 +1,15 @@
 public class ConsoleUI implements UI {
     @Override
-    public void displayBoard(Board b) {
+    public void displayBoard(Board board) {
         System.out.print("-\t");
-        var tab = b.tab;
+        var tab = board.tab;
         for (int i = 0; i < tab[0].length; i++)
             System.out.print(i + "\t");
         System.out.println();
+
         for (int y = 0; y < tab.length; y++) {
+
+            // display letters for 'y' coordinate
             System.out.print((char)(y+'a') + "\t");
             for (int x = 0; x < tab[y].length; x++) {
                 char c = tab[y][x].content.getCharValue();
