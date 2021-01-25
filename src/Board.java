@@ -23,9 +23,9 @@ public class Board {
             for (int x = 0; x < tab[y].length; x++) {
                 f = tab[y][x] = new Field(x, y);
                 f.inferStartingContent(size, pawnRows);
-                if (f.getColor() == 1) {
+                if (f.getColor() == Pawn.BLACK) {
                     gameState.playerA.add(f);
-                } else if (f.getColor() == 2) {
+                } else if (f.getColor() == Pawn.WHITE) {
                     gameState.playerB.add(f);
                 }
             }
@@ -47,7 +47,8 @@ public class Board {
     }
 
     boolean areOfOppositeColor(Field a, Field b) {
-        return ((a.getColor() == 1 && b.getColor() == 2) || (a.getColor() == 2 && b.getColor() == 1));
+        return ((a.getColor() == Pawn.BLACK && b.getColor() == Pawn.WHITE)
+                || (a.getColor() == Pawn.WHITE && b.getColor() == Pawn.BLACK));
     }
 
     int[] directionTowards(Field f, Field t) {
@@ -74,8 +75,7 @@ public class Board {
     int movePawn(Field a, Field b) {
         // this is also suitable as moveQueen
         int r = -1;
-        // TODO: simplify this condition
-        if (!a.isEmpty() && (possibleMoves(a).contains(b) || possibleKills(a).contains(b))) {
+        if (!a.isEmpty()) {
             // move is valid
             r = 0;
             gameState.updateHistory(a, b);
@@ -102,9 +102,9 @@ public class Board {
 
         // pawns move in one direction only
         // these modifiers indicate diagonals along which they can move
-        if (a.getColor() == 1)
+        if (a.getColor() == Pawn.BLACK)
             modifiers = new int[][]{{1, 1}, {-1, 1}};
-        else if (a.getColor() == 2)
+        else if (a.getColor() == Pawn.WHITE)
             modifiers = new int[][]{{1, -1}, {-1, -1}};
         else
             modifiers = new int[][]{};
@@ -229,9 +229,9 @@ public class Board {
         for (int y = 0; y < tab.length; y++) {
             for (int x = 0; x < tab[y].length; x++) {
                 f = newTable[y][x] = getField(x, y).clone();
-                if (f.getColor() == 1) {
+                if (f.getColor() == Pawn.BLACK) {
                     newGameState.playerA.add(f);
-                } else if (f.getColor() == 2) {
+                } else if (f.getColor() == Pawn.WHITE) {
                     newGameState.playerB.add(f);
                 }
             }
