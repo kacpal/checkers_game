@@ -3,11 +3,11 @@ import java.util.Scanner;
 
 public class HumanPlayer implements Player {
     private Scanner scanner = new Scanner(System.in);
-    private int color;
+    private Pawn color;
     Board board;
     UI ui;
 
-    HumanPlayer(Board b, int c, UI ui) {
+    HumanPlayer(Board b, Pawn c, UI ui) {
         board = b;
         color = c;
         this.ui = ui;
