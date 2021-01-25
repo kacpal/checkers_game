@@ -75,7 +75,7 @@ public class Board {
     int movePawn(Field a, Field b) {
         // this is also suitable as moveQueen
         int r = -1;
-        if (!a.isEmpty()) {
+        if (!a.isEmpty() && (possibleMoves(a).contains(b) || possibleKills(a).contains(b))) {
             // move is valid
             r = 0;
             gameState.updateHistory(a, b);
