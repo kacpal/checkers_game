@@ -1,19 +1,27 @@
 public class ConsoleUI implements UI {
+    private String interspace = "\t";
+
+    ConsoleUI() {}
+
+    ConsoleUI(String interspace) {
+        this.interspace = interspace;
+    }
+
     @Override
     public void displayBoard(Board board) {
-        System.out.print("-\t");
+        System.out.print("-" + interspace);
         var tab = board.tab;
         for (int i = 0; i < tab[0].length; i++)
-            System.out.print(i + "\t");
+            System.out.print(i + interspace);
         System.out.println();
 
         for (int y = 0; y < tab.length; y++) {
 
             // display letters for 'y' coordinate
-            System.out.print((char)(y+'a') + "\t");
+            System.out.print((char)(y+'a') + interspace);
             for (int x = 0; x < tab[y].length; x++) {
                 char c = tab[y][x].content.getCharValue();
-                System.out.print(c + "\t");
+                System.out.print(c + interspace);
             }
             System.out.println();
         }

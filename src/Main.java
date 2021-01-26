@@ -1,21 +1,41 @@
 public class Main {
     public static void main(String[] args) {
-        boolean playerGoesFirst = (args.length > 0 && args[0].equals("--first"));
-        boolean ai = (args.length > 0 && args[0].equals("--aiOnly"));
+        boolean aiOnly = false, playerGoesFirst = false, playersOnly = false;
+        int boardSize = 10, pawnRows = 4, difficulty = 4;
+        String interspace = "\t";
 
-        UI ui = new ConsoleUI();
-        Board board = new Board(ui);
+        for (String argument : args) {
+            if (argument.equals("--first"))     playerGoesFirst = true;
+            if (argument.equals("--ai-only"))   aiOnly = true;
+            if (argument.equals("--players-only"))  playersOnly = true;
+            if (argument.equals("--spaces"))    interspace = " ";
+            if (argument.equals("--hard"))      difficulty = 5;
+            if (argument.equals("--easy"))      difficulty = 3;
+            if (argument.equals("--board-8")) {
+                boardSize = 8;
+                pawnRows = 3;
+            } if (argument.equals("--board-12")) {
+                boardSize = 12;
+                pawnRows = 5;
+            }
+        }
+
+        UI ui = new ConsoleUI(interspace);
+        Board board = new Board(ui, boardSize, pawnRows);
 
         Player a, b;
 
-        if (playerGoesFirst) {
+        if (playersOnly) {
             a = new HumanPlayer(board, Pawn.BLACK, ui);
-            b = new ComputerPlayer(board, Pawn.WHITE, ui);
-        } else if (ai) {
-            a = new ComputerPlayer(board, Pawn.BLACK, ui);
-            b = new ComputerPlayer(board, Pawn.WHITE, ui);
+            b = new HumanPlayer(board, Pawn.WHITE, ui);
+        } else if (aiOnly) {
+            a = new ComputerPlayer(board, Pawn.BLACK, difficulty, ui);
+            b = new ComputerPlayer(board, Pawn.WHITE, difficulty, ui);
+        } else if (playerGoesFirst) {
+            a = new HumanPlayer(board, Pawn.BLACK, ui);
+            b = new ComputerPlayer(board, Pawn.WHITE, difficulty, ui);
         } else {
-            a = new ComputerPlayer(board, Pawn.BLACK, ui);
+            a = new ComputerPlayer(board, Pawn.BLACK, difficulty, ui);
             b = new HumanPlayer(board, Pawn.WHITE, ui);
         }
 

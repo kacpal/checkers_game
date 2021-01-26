@@ -75,20 +75,6 @@ public class Field implements Serializable {
         }
     }
 
-    boolean canReach(int x, int y) {
-        x = Math.abs(x - this.x);
-        if (x != Math.abs(y - this.y))
-            return false;
-        else if (x > 1)
-            return isQueen();
-        else
-            return (x == 1);
-    }
-
-    boolean canReach(Field f) {
-        return canReach(f.x, f.y);
-    }
-
     @Override
     public Field clone() {
         Field newField = new Field(x, y);

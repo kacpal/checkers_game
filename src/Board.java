@@ -17,6 +17,15 @@ public class Board {
         this.initializeFields();
     }
 
+    Board(UI ui, int size, int pawnRows) {
+        this.ui = ui;
+        this.size = size;
+        this.pawnRows = pawnRows;
+        this.tab = new Field[size][size];
+        this.gameState = new GameState();
+        this.initializeFields();
+    }
+
     void initializeFields() {
         Field field;
         for (int y = 0; y < tab.length; y++) {
@@ -265,6 +274,8 @@ public class Board {
 
         Board newBoard = new Board();
         newBoard.ui = newUI;
+        newBoard.size = this.size;
+        newBoard.pawnRows = this.pawnRows;
         newBoard.gameState = newGameState;
         newBoard.tab = newTable;
 
