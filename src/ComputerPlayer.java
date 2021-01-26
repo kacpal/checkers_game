@@ -2,13 +2,14 @@ import java.util.ArrayList;
 
 public class ComputerPlayer implements Player {
     private Pawn color;
-    private int depth = 5;
+    private int depth;
     Board board;
     UI ui;
 
-    ComputerPlayer(Board board, Pawn color, UI ui) {
+    ComputerPlayer(Board board, Pawn color, int depth, UI ui) {
         this.board = board;
         this.color = color;
+        this.depth = depth;
         this.ui = ui;
     }
 

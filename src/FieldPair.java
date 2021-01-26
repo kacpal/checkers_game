@@ -13,11 +13,11 @@ class FieldPair {
     public String toString() {
         String r = "";
         if (first != null)
-            r += first.x + "-" + first.y;
+            r += (char)('a'+first.y) + "-" + first.x;
         else r += "null";
         r += " -- ";
         if (second != null)
-            r += second.x + "-" + second.y;
+            r += (char)('a'+second.y) + "-" + second.x;
         else r += "null";
         return r;
     }
